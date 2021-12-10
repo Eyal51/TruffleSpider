@@ -22,9 +22,6 @@ def read_pattern(r):
 
 
 def shannon_entropy(data, iterator):
-    """
-    Borrowed from http://blog.dkbza.org/2007/05/scanning-data-for-entropy-anomalies.html
-    """
     if not data:
         return 0
     entropy = 0
@@ -63,7 +60,6 @@ def find_entropy(data: str):
                 b64_entropy = shannon_entropy(string, BASE64_CHARS)
                 if b64_entropy > 4.5:
                     secrets.append(string)
-
             for string in hex_strings:
                 hex_entropy = shannon_entropy(string, HEX_CHARS)
                 if hex_entropy > 3:
@@ -75,17 +71,17 @@ def regex_check(data: str, custom_regexes: dict) -> list:
     regex_matches = []
     for regex in custom_regexes.values():
         regex_matches += regex.findall(data)
-
     return regex_matches
 
 
-def get_secrets(data: str, custom_regexes: dict, do_entropy=True, do_regex=True) -> list:
-    secrets = []
+def get_secrets(data: str, custom_regexes: dict, do_entropy=True, do_regex=True) -> tuple:
+    entropy = []
+    regex = []
     if do_entropy:
-        secrets += find_entropy(data)
+        entropy += find_entropy(data)
     if do_regex:
-        secrets += regex_check(data, custom_regexes)
-    return list(dict.fromkeys(secrets))
+        regex += regex_check(data, custom_regexes)
+    return list(set(entropy)), list(set(entropy))
 
 
 def spiderlinks(target: str) -> list:
@@ -115,8 +111,8 @@ if __name__ == '__main__':
     parser = ArgumentParser(description='Spider a target website, find its .JS files and search for secrets there')
     parser.add_argument('url', type=str, help='the url to scan')
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--no-entropy', type=bool, action='store_false', default=True, help='do not search secrets by entropy')
-    group.add_argument('--no-regex', type=bool, action='store_false', default=True, help='do not search secrets by regex')
+    group.add_argument('--no-entropy', action='store_false', default=True, help='do not search secrets by entropy')
+    group.add_argument('--no-regex', action='store_false', default=True, help='do not search secrets by regex')
     args = parser.parse_args()
     site = args.url
     if site.endswith('/'):
@@ -146,25 +142,30 @@ if __name__ == '__main__':
                 if dom in interestingscript:
                     js = requests.get(interestingscript).text
                     beautiful = jsbeautifier.beautify(js)
-                    secret_result = get_secrets(beautiful, regexes, do_entropy=args.noentropy, do_regex=args.noregex)
-
-                    for sec in secret_result:
-                        if 'data:image' in sec:
-                            continue
+                    entropy_results, regex_results = get_secrets(beautiful, regexes, do_entropy=args.no_entropy, do_regex=args.no_regex)
+                    for regex_result in regex_results:
                         splat = beautiful.split('\n')
                         for k, v in enumerate(splat):
-                            if sec in v:
-                                print(f'{Style.BRIGHT}[+] secret maybe found, row {k+1} on {interestingscript}:')
+                            if regex_result in v:
+                                print(f'{Style.BRIGHT}[+] regex match found, row {k+1} on {interestingscript}:')
                                 print(Fore.LIGHTYELLOW_EX + splat[k - 1])
                                 print(Fore.LIGHTYELLOW_EX + splat[k])
                                 print(Fore.LIGHTYELLOW_EX + splat[k + 1])
-                                newfilename = f'latruffe_{interestingscript.replace("://","_").replace(":","_").replace("/","_")}'
-                                print(f'[*] file saved as: {newfilename}\n{"-" * 20}')
-                                with open(newfilename, 'w') as f:
-                                    f.write(interestingscript)
-                                break
+                    for regex_result in regex_results:
+                        splat = beautiful.split('\n')
+                        for k, v in enumerate(splat):
+                            if regex_result in v and 'data:image' not in v:
+                                print(f'{Style.BRIGHT}[+] high entropy found, row {k+1} on {interestingscript}:')
+                                print(Fore.LIGHTCYAN_EX + splat[k - 1])
+                                print(Fore.LIGHTCYAN_EX + splat[k])
+                                print(Fore.LIGHTCYAN_EX + splat[k + 1])
+                    if entropy_results or regex_results:
+                        newfilename = f'latruffe_{interestingscript.replace("://","_").replace(":","_").replace("/","_")}'
+                        print(f'[*] file saved as: {newfilename}\n{"-" * 40}')
+                        with open(newfilename, 'w') as f:
+                            f.write(interestingscript)
         else:
             print(f'{Fore.LIGHTRED_EX}[-] no scripts found')
     else:
         print(f'{Fore.LIGHTRED_EX}[-] Error\n{res.status_code}\n{res.headers}')
-    print(Fore.LIGHTCYAN_EX + 'OK I love you bye bye')
+    print('\n'+ Fore.LIGHTBLUE_EX + 'OK I love you bye bye')
