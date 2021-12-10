@@ -163,9 +163,10 @@ if __name__ == '__main__':
                                 print(Fore.LIGHTCYAN_EX + splat[k + 1])
                                 duplist.update({k - 1, k, k + 1})
                     if entropy_results or regex_results:
-                        newfilename = f'latruffe_{interestingscript.replace("://","_").replace(":","_").replace("/","_")}'
+                        newfilename = f'latruffe_{interestingscript.split("?")[0].replace("://","_").replace(":","_").replace("/","_")}'
                         print(f'[*] file saved as: {newfilename}\n{"-" * 40}')
                         with open(newfilename, 'w') as f:
+                            f.write(f'//Interesting lines:\n//{duplist}\n')
                             f.write(interestingscript)
                     else:
                         if args.no_entropy:
@@ -178,4 +179,4 @@ if __name__ == '__main__':
             print(f'{Fore.LIGHTRED_EX}[-] no scripts found')
     else:
         print(f'{Fore.LIGHTRED_EX}[-] Error\n{res.status_code}\n{res.headers}')
-    print('\n' + Fore.LIGHTBLUE_EX + 'OK I love you bye bye')
+    print('\n' + Fore.LIGHTBLUE_EX + 'OK I love you bye bye\n')
