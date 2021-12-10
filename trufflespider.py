@@ -113,6 +113,7 @@ if __name__ == '__main__':
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--no-entropy', action='store_false', default=True, help='do not search secrets by entropy')
     group.add_argument('--no-regex', action='store_false', default=True, help='do not search secrets by regex')
+    parser.add_argument('--no-limit', action='store_true', default=False, help='do not limit searching js files to the same domain')
     args = parser.parse_args()
     site = args.url
     if site.endswith('/'):
@@ -139,7 +140,7 @@ if __name__ == '__main__':
         if scriptlist:
             print(f'{Fore.LIGHTGREEN_EX}[+]{Fore.RESET} scripts found:\n\t{scriptlist}\n{Fore.LIGHTGREEN_EX}[+]{Fore.RESET} now crunching, hold on.')
             for interestingscript in scriptlist:
-                if dom in interestingscript:
+                if dom in interestingscript or args.no_limit:
                     js = requests.get(interestingscript).text
                     beautiful = jsbeautifier.beautify(js)
                     entropy_results, regex_results = get_secrets(beautiful, regexes, do_entropy=args.no_entropy, do_regex=args.no_regex)
