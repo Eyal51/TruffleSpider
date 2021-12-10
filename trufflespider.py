@@ -1,3 +1,4 @@
+from colorama import Fore, init, Style
 from argparse import ArgumentParser
 from bs4 import BeautifulSoup
 import tldextract
@@ -7,6 +8,7 @@ import math
 import requests
 from truffleHogRegexes.regexChecks import regexes
 
+init(autoreset=True)
 BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
 HEX_CHARS = "1234567890abcdefABCDEF"
 
@@ -119,7 +121,7 @@ if __name__ == '__main__':
     linklist = spiderlinks(site)
     sub, dom, tld = tldextract.extract(site)
     basedomain = f'{dom}.{tld}'
-    print(f'[+] now running on: {site}, scope is anything with {dom}')
+    print(f'[+] now running on: {Fore.MAGENTA + site + Fore.RESET}, scope is anything with {Fore.MAGENTA + dom}')
     runlist = []
     scriptlist = set()
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:94.0) Gecko/20100101 Firefox/94.0"}
@@ -136,7 +138,7 @@ if __name__ == '__main__':
                 else:
                     scriptlist.add(site + '/' + url)
         if scriptlist:
-            print(f'[+] scripts found:\n\t{scriptlist}')
+            print(f'{Fore.LIGHTGREEN_EX}[+]{Fore.RESET} scripts found:\n\t{scriptlist}')
             for interestingscript in scriptlist:
                 if dom in interestingscript:
                     js = requests.get(interestingscript).text
@@ -147,16 +149,17 @@ if __name__ == '__main__':
                             splat = beautiful.split('\n')
                             for k, v in enumerate(splat):
                                 if sec in v:
-                                    print(f'[*] secret maybe found, row {k+1} on {interestingscript}:')
-                                    print(splat[k - 1])
-                                    print(splat[k])
-                                    print(splat[k + 1])
+                                    print(f'{Style.BRIGHT}[+] secret maybe found, row {k+1} on {interestingscript}:')
+                                    print(Fore.LIGHTYELLOW_EX + splat[k - 1])
+                                    print(Fore.LIGHTYELLOW_EX + splat[k])
+                                    print(Fore.LIGHTYELLOW_EX + splat[k + 1])
                                     newfilename = f'latruffe_{interestingscript.replace("://","_").replace(":","_").replace("/","_")}'
-                                    print(f'file saved as: {newfilename}')
+                                    print(f'[+] file saved as: {newfilename}\n{"-" * 20}')
                                     with open(newfilename, 'w') as f:
                                         f.write(interestingscript)
                                     break
         else:
-            print('[-] no scripts found')
+            print(f'{Fore.LIGHTRED_EX}[-] no scripts found')
     else:
-        print(f'[-] Error\n{res.status_code}\n{res.headers}')
+        print(f'{Fore.LIGHTRED_EX}[-] Error\n{res.status_code}\n{res.headers}')
+    print(Fore.LIGHTCYAN_EX + 'OK I love you bye bye')
