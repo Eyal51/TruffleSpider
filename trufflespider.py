@@ -112,8 +112,11 @@ def spiderlinks(target: str) -> list:
 
 
 if __name__ == '__main__':
-    parser = ArgumentParser()
+    parser = ArgumentParser(description='Spider a target website, find its .JS files and search for secrets there')
     parser.add_argument('url', type=str, help='the url to scan')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--no-entropy', type=bool, action='store_false', default=True, help='do not search secrets by entropy')
+    group.add_argument('--no-regex', type=bool, action='store_false', default=True, help='do not search secrets by regex')
     args = parser.parse_args()
     site = args.url
     if site.endswith('/'):
@@ -143,7 +146,8 @@ if __name__ == '__main__':
                 if dom in interestingscript:
                     js = requests.get(interestingscript).text
                     beautiful = jsbeautifier.beautify(js)
-                    secret_result = get_secrets(beautiful, regexes)
+                    secret_result = get_secrets(beautiful, regexes, do_entropy=args.noentropy, do_regex=args.noregex)
+
                     for sec in secret_result:
                         if 'data:image' in sec:
                             continue
@@ -155,7 +159,7 @@ if __name__ == '__main__':
                                 print(Fore.LIGHTYELLOW_EX + splat[k])
                                 print(Fore.LIGHTYELLOW_EX + splat[k + 1])
                                 newfilename = f'latruffe_{interestingscript.replace("://","_").replace(":","_").replace("/","_")}'
-                                print(f'[+] file saved as: {newfilename}\n{"-" * 20}')
+                                print(f'[*] file saved as: {newfilename}\n{"-" * 20}')
                                 with open(newfilename, 'w') as f:
                                     f.write(interestingscript)
                                 break
