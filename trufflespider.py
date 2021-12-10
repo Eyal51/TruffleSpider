@@ -121,7 +121,7 @@ if __name__ == '__main__':
     linklist = spiderlinks(site)
     sub, dom, tld = tldextract.extract(site)
     basedomain = f'{dom}.{tld}'
-    print(f'[+] now running on: {Fore.MAGENTA + site + Fore.RESET}, scope is anything with {Fore.MAGENTA + dom}')
+    print(f'[+] now running on: {Fore.LIGHTMAGENTA_EX + site + Fore.RESET}, scope is anything with {Fore.LIGHTMAGENTA_EX + dom}')
     runlist = []
     scriptlist = set()
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:94.0) Gecko/20100101 Firefox/94.0"}
