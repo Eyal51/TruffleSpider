@@ -143,22 +143,25 @@ if __name__ == '__main__':
                     js = requests.get(interestingscript).text
                     beautiful = jsbeautifier.beautify(js)
                     entropy_results, regex_results = get_secrets(beautiful, regexes, do_entropy=args.no_entropy, do_regex=args.no_regex)
+                    duplist = set()
                     for regex_result in regex_results:
                         splat = beautiful.split('\n')
                         for k, v in enumerate(splat):
-                            if regex_result in v:
+                            if regex_result in v and k not in duplist:
                                 print(f'{Style.BRIGHT}[+] regex match found, row {k+1} on {interestingscript}:')
                                 print(Fore.LIGHTYELLOW_EX + splat[k - 1])
                                 print(Fore.LIGHTYELLOW_EX + splat[k])
                                 print(Fore.LIGHTYELLOW_EX + splat[k + 1])
+                                duplist.update({k - 1, k, k + 1})
                     for entropy_result in entropy_results:
                         splat = beautiful.split('\n')
                         for k, v in enumerate(splat):
-                            if entropy_result in v and 'data:image' not in v:
+                            if entropy_result in v and 'data:image' not in v and k not in duplist:
                                 print(f'{Style.BRIGHT}[+] high entropy found, row {k+1} on {interestingscript}:')
                                 print(Fore.LIGHTCYAN_EX + splat[k - 1])
                                 print(Fore.LIGHTCYAN_EX + splat[k])
                                 print(Fore.LIGHTCYAN_EX + splat[k + 1])
+                                duplist.update({k - 1, k, k + 1})
                     if entropy_results or regex_results:
                         newfilename = f'latruffe_{interestingscript.replace("://","_").replace(":","_").replace("/","_")}'
                         print(f'[*] file saved as: {newfilename}\n{"-" * 40}')
@@ -175,4 +178,4 @@ if __name__ == '__main__':
             print(f'{Fore.LIGHTRED_EX}[-] no scripts found')
     else:
         print(f'{Fore.LIGHTRED_EX}[-] Error\n{res.status_code}\n{res.headers}')
-    print('\n'+ Fore.LIGHTBLUE_EX + 'OK I love you bye bye')
+    print('\n' + Fore.LIGHTBLUE_EX + 'OK I love you bye bye')
