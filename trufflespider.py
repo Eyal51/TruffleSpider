@@ -168,12 +168,12 @@ if __name__ == '__main__':
                         with open(newfilename, 'w') as f:
                             f.write(interestingscript)
                     else:
-                        if not args.no_entropy:
-                            print(f'{Fore.LIGHTRED_EX}[-] no high entropy strings found in scripts')
-                        elif not args.no_regex:
-                            print(f'{Fore.LIGHTRED_EX}[-] no regex matches found in scripts')
+                        if args.no_entropy:
+                            print(f'{Fore.LIGHTRED_EX}[-] no high entropy strings found in script {interestingscript}')
+                        elif args.no_regex:
+                            print(f'{Fore.LIGHTRED_EX}[-] no regex matches found in script {interestingscript}')
                         else:
-                            print(f'{Fore.LIGHTRED_EX}[-] no regex or high entropy found in scripts')
+                            print(f'{Fore.LIGHTRED_EX}[-] no regex or high entropy found in script {interestingscript}')
         else:
             print(f'{Fore.LIGHTRED_EX}[-] no scripts found')
     else:
