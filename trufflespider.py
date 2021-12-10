@@ -115,11 +115,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
     site = args.url
     if site.endswith('/'):
-        target = site[:-1]
+        site = site[:-1]
     linklist = spiderlinks(site)
     sub, dom, tld = tldextract.extract(site)
     basedomain = f'{dom}.{tld}'
-    print(f'[+] now running on: {basedomain}')
+    print(f'[+] now running on: {site}, scope is anything with {dom}')
     runlist = []
     scriptlist = set()
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:94.0) Gecko/20100101 Firefox/94.0"}
@@ -151,7 +151,7 @@ if __name__ == '__main__':
                                     print(splat[k - 1])
                                     print(splat[k])
                                     print(splat[k + 1])
-                                    newfilename = f'latruffe_{interestingscript.replace(":","_").replace("/","_")}'
+                                    newfilename = f'latruffe_{interestingscript.replace("://","_").replace(":","_").replace("/","_")}'
                                     print(f'file saved as: {newfilename}')
                                     with open(newfilename, 'w') as f:
                                         f.write(interestingscript)
