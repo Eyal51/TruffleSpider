@@ -1,0 +1,5 @@
+requests>=2.26.0
+tldextract>=3.1.2
+jsbeautifier>=1.14.0
+beautifulsoup4>=4.10.0
+truffleHogRegexes>=0.0.7
