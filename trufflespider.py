@@ -81,7 +81,7 @@ def get_secrets(data: str, custom_regexes: dict, do_entropy=True, do_regex=True)
         entropy += find_entropy(data)
     if do_regex:
         regex += regex_check(data, custom_regexes)
-    return list(set(entropy)), list(set(entropy))
+    return list(set(entropy)), list(set(regex))
 
 
 def spiderlinks(target: str) -> list:
@@ -137,7 +137,7 @@ if __name__ == '__main__':
                 else:
                     scriptlist.add(site + '/' + url)
         if scriptlist:
-            print(f'{Fore.LIGHTGREEN_EX}[+]{Fore.RESET} scripts found:\n\t{scriptlist}')
+            print(f'{Fore.LIGHTGREEN_EX}[+]{Fore.RESET} scripts found:\n\t{scriptlist}\n{Fore.LIGHTGREEN_EX}[+]{Fore.RESET} now crunching, hold on.')
             for interestingscript in scriptlist:
                 if dom in interestingscript:
                     js = requests.get(interestingscript).text
@@ -151,10 +151,10 @@ if __name__ == '__main__':
                                 print(Fore.LIGHTYELLOW_EX + splat[k - 1])
                                 print(Fore.LIGHTYELLOW_EX + splat[k])
                                 print(Fore.LIGHTYELLOW_EX + splat[k + 1])
-                    for regex_result in regex_results:
+                    for entropy_result in entropy_results:
                         splat = beautiful.split('\n')
                         for k, v in enumerate(splat):
-                            if regex_result in v and 'data:image' not in v:
+                            if entropy_result in v and 'data:image' not in v:
                                 print(f'{Style.BRIGHT}[+] high entropy found, row {k+1} on {interestingscript}:')
                                 print(Fore.LIGHTCYAN_EX + splat[k - 1])
                                 print(Fore.LIGHTCYAN_EX + splat[k])
@@ -164,6 +164,13 @@ if __name__ == '__main__':
                         print(f'[*] file saved as: {newfilename}\n{"-" * 40}')
                         with open(newfilename, 'w') as f:
                             f.write(interestingscript)
+                    else:
+                        if not args.no_entropy:
+                            print(f'{Fore.LIGHTRED_EX}[-] no high entropy strings found in scripts')
+                        elif not args.no_regex:
+                            print(f'{Fore.LIGHTRED_EX}[-] no regex matches found in scripts')
+                        else:
+                            print(f'{Fore.LIGHTRED_EX}[-] no regex or high entropy found in scripts')
         else:
             print(f'{Fore.LIGHTRED_EX}[-] no scripts found')
     else:
