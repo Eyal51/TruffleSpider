@@ -121,7 +121,7 @@ if __name__ == '__main__':
     linklist = spiderlinks(site)
     sub, dom, tld = tldextract.extract(site)
     basedomain = f'{dom}.{tld}'
-    print(f'[+] now running on: {Fore.LIGHTMAGENTA_EX + site + Fore.RESET}, scope is anything with {Fore.LIGHTMAGENTA_EX + dom}')
+    print(f'{Fore.LIGHTBLUE_EX}[*]{Fore.RESET} now running on: {Fore.LIGHTMAGENTA_EX + site + Fore.RESET}, scope is anything with {Fore.LIGHTMAGENTA_EX + dom}')
     runlist = []
     scriptlist = set()
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:94.0) Gecko/20100101 Firefox/94.0"}
@@ -144,20 +144,21 @@ if __name__ == '__main__':
                     js = requests.get(interestingscript).text
                     beautiful = jsbeautifier.beautify(js)
                     secret_result = get_secrets(beautiful, regexes)
-                    if secret_result:
-                        for sec in secret_result:
-                            splat = beautiful.split('\n')
-                            for k, v in enumerate(splat):
-                                if sec in v:
-                                    print(f'{Style.BRIGHT}[+] secret maybe found, row {k+1} on {interestingscript}:')
-                                    print(Fore.LIGHTYELLOW_EX + splat[k - 1])
-                                    print(Fore.LIGHTYELLOW_EX + splat[k])
-                                    print(Fore.LIGHTYELLOW_EX + splat[k + 1])
-                                    newfilename = f'latruffe_{interestingscript.replace("://","_").replace(":","_").replace("/","_")}'
-                                    print(f'[+] file saved as: {newfilename}\n{"-" * 20}')
-                                    with open(newfilename, 'w') as f:
-                                        f.write(interestingscript)
-                                    break
+                    for sec in secret_result:
+                        if 'data:image' in sec:
+                            continue
+                        splat = beautiful.split('\n')
+                        for k, v in enumerate(splat):
+                            if sec in v:
+                                print(f'{Style.BRIGHT}[+] secret maybe found, row {k+1} on {interestingscript}:')
+                                print(Fore.LIGHTYELLOW_EX + splat[k - 1])
+                                print(Fore.LIGHTYELLOW_EX + splat[k])
+                                print(Fore.LIGHTYELLOW_EX + splat[k + 1])
+                                newfilename = f'latruffe_{interestingscript.replace("://","_").replace(":","_").replace("/","_")}'
+                                print(f'[+] file saved as: {newfilename}\n{"-" * 20}')
+                                with open(newfilename, 'w') as f:
+                                    f.write(interestingscript)
+                                break
         else:
             print(f'{Fore.LIGHTRED_EX}[-] no scripts found')
     else:
