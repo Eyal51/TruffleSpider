@@ -170,9 +170,9 @@ if __name__ == '__main__':
                             f.write(f'//Interesting lines:\n//{duplist}\n')
                             f.write(interestingscript)
                     else:
-                        if args.no_entropy:
+                        if not args.no_entropy:
                             print(f'{Fore.LIGHTRED_EX}[-] no high entropy strings found in script {interestingscript}')
-                        elif args.no_regex:
+                        elif not args.no_regex:
                             print(f'{Fore.LIGHTRED_EX}[-] no regex matches found in script {interestingscript}')
                         else:
                             print(f'{Fore.LIGHTRED_EX}[-] no regex or high entropy found in script {interestingscript}')
