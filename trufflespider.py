@@ -134,7 +134,7 @@ def extract_secrets(interestingscript):
         newfilename = f'latruffe_{interestingscript.split("?")[0].replace("://", "_").replace(":", "_").replace("/", "_")}'
         print(f'[*] file saved as: {newfilename}\n{"-" * 40}')
         with open(newfilename, 'w') as f:
-            f.write(f'//Interesting lines:\n//{duplist}\n')
+            f.write(f'Interesting lines:\n{duplist}\n')
             f.write(beautiful)
     else:
         if not args.no_entropy:
