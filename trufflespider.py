@@ -135,7 +135,7 @@ def extract_secrets(interestingscript):
         print(f'[*] file saved as: {newfilename}\n{"-" * 40}')
         with open(newfilename, 'w') as f:
             f.write(f'//Interesting lines:\n//{duplist}\n')
-            f.write(interestingscript)
+            f.write(beautiful)
     else:
         if not args.no_entropy:
             print(f'{Fore.LIGHTRED_EX}[-] no high entropy strings found in script {interestingscript}')
