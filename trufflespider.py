@@ -107,77 +107,90 @@ def spiderlinks(target: str) -> list:
     return list(linklist)
 
 
+def extract_secrets(interestingscript):
+    js = requests.get(interestingscript).text
+    beautiful = jsbeautifier.beautify(js)
+    entropy_results, regex_results = get_secrets(beautiful, regexes, do_entropy=args.no_entropy, do_regex=args.no_regex)
+    duplist = set()
+    for regex_result in regex_results:
+        splat = beautiful.split('\n')
+        for k, v in enumerate(splat):
+            if regex_result in v and k not in duplist:
+                print(f'{Style.BRIGHT}[+] regex match found, row {k + 1} on {interestingscript}:')
+                print(Fore.LIGHTYELLOW_EX + splat[k - 1])
+                print(Fore.LIGHTYELLOW_EX + splat[k])
+                print(Fore.LIGHTYELLOW_EX + splat[k + 1])
+                duplist.update({k - 1, k, k + 1})
+    for entropy_result in entropy_results:
+        splat = beautiful.split('\n')
+        for k, v in enumerate(splat):
+            if entropy_result in v and 'data:image' not in v and k not in duplist:
+                print(f'{Style.BRIGHT}[+] high entropy found, row {k + 1} on {interestingscript}:')
+                print(Fore.LIGHTCYAN_EX + splat[k - 1])
+                print(Fore.LIGHTCYAN_EX + splat[k])
+                print(Fore.LIGHTCYAN_EX + splat[k + 1])
+                duplist.update({k - 1, k, k + 1})
+    if entropy_results or regex_results:
+        newfilename = f'latruffe_{interestingscript.split("?")[0].replace("://", "_").replace(":", "_").replace("/", "_")}'
+        print(f'[*] file saved as: {newfilename}\n{"-" * 40}')
+        with open(newfilename, 'w') as f:
+            f.write(f'//Interesting lines:\n//{duplist}\n')
+            f.write(interestingscript)
+    else:
+        if not args.no_entropy:
+            print(f'{Fore.LIGHTRED_EX}[-] no high entropy strings found in script {interestingscript}')
+        elif not args.no_regex:
+            print(f'{Fore.LIGHTRED_EX}[-] no regex matches found in script {interestingscript}')
+        else:
+            print(f'{Fore.LIGHTRED_EX}[-] no regex or high entropy found in script {interestingscript}')
+
+
 if __name__ == '__main__':
     parser = ArgumentParser(description='Spider a target website, find its .JS files and search for secrets there')
-    parser.add_argument('url', type=str, help='the url to scan')
+    source = parser.add_mutually_exclusive_group()
+    source.add_argument('url', type=str, nargs='?', help='the url to scan')
+    source.add_argument('-s', type=str, nargs='?', help='a direct link to .js file to test. no spidering.')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--no-entropy', action='store_false', default=True, help='do not search secrets by entropy')
     group.add_argument('--no-regex', action='store_false', default=True, help='do not search secrets by regex')
     parser.add_argument('--no-limit', action='store_true', default=False, help='do not limit searching js files to the same domain')
     args = parser.parse_args()
-    site = args.url
-    if site.endswith('/'):
-        site = site[:-1]
-    linklist = spiderlinks(site)
-    sub, dom, tld = tldextract.extract(site)
-    basedomain = f'{dom}.{tld}'
-    print(f'{Fore.LIGHTBLUE_EX}[*]{Fore.RESET} now running on: {Fore.LIGHTMAGENTA_EX + site + Fore.RESET}, scope is anything with {Fore.LIGHTMAGENTA_EX + dom}')
-    runlist = []
-    scriptlist = set()
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:94.0) Gecko/20100101 Firefox/94.0"}
-    res = requests.get(site, headers=headers)
-    if res.status_code == 200:
-        soup = BeautifulSoup(res.text, 'html.parser')
-        for script in soup.find_all('script'):
-            if script.attrs.get('src'):
-                url = script.attrs.get('src')
-                if url.startswith('/'):
-                    scriptlist.add(site + url)
-                elif url.startswith('http'):
-                    scriptlist.add(url)
-                else:
-                    scriptlist.add(site + '/' + url)
-        if scriptlist:
-            print(f'{Fore.LIGHTGREEN_EX}[+]{Fore.RESET} scripts found:\n\t{scriptlist}\n{Fore.LIGHTGREEN_EX}[+]{Fore.RESET} now crunching, hold on.')
-            for interestingscript in scriptlist:
-                if dom in interestingscript or args.no_limit:
-                    js = requests.get(interestingscript).text
-                    beautiful = jsbeautifier.beautify(js)
-                    entropy_results, regex_results = get_secrets(beautiful, regexes, do_entropy=args.no_entropy, do_regex=args.no_regex)
-                    duplist = set()
-                    for regex_result in regex_results:
-                        splat = beautiful.split('\n')
-                        for k, v in enumerate(splat):
-                            if regex_result in v and k not in duplist:
-                                print(f'{Style.BRIGHT}[+] regex match found, row {k+1} on {interestingscript}:')
-                                print(Fore.LIGHTYELLOW_EX + splat[k - 1])
-                                print(Fore.LIGHTYELLOW_EX + splat[k])
-                                print(Fore.LIGHTYELLOW_EX + splat[k + 1])
-                                duplist.update({k - 1, k, k + 1})
-                    for entropy_result in entropy_results:
-                        splat = beautiful.split('\n')
-                        for k, v in enumerate(splat):
-                            if entropy_result in v and 'data:image' not in v and k not in duplist:
-                                print(f'{Style.BRIGHT}[+] high entropy found, row {k+1} on {interestingscript}:')
-                                print(Fore.LIGHTCYAN_EX + splat[k - 1])
-                                print(Fore.LIGHTCYAN_EX + splat[k])
-                                print(Fore.LIGHTCYAN_EX + splat[k + 1])
-                                duplist.update({k - 1, k, k + 1})
-                    if entropy_results or regex_results:
-                        newfilename = f'latruffe_{interestingscript.split("?")[0].replace("://","_").replace(":","_").replace("/","_")}'
-                        print(f'[*] file saved as: {newfilename}\n{"-" * 40}')
-                        with open(newfilename, 'w') as f:
-                            f.write(f'//Interesting lines:\n//{duplist}\n')
-                            f.write(interestingscript)
+    if args.s:
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:94.0) Gecko/20100101 Firefox/94.0"}
+        res = requests.get(args.s, headers=headers)
+        if res.status_code == 200:
+            print(f'{Fore.LIGHTBLUE_EX}[*]{Fore.RESET} now searching secrets on: {Fore.LIGHTMAGENTA_EX + args.s + Fore.RESET}')
+            extract_secrets(args.s)
+    elif args.url:
+        site = args.url
+        if site.endswith('/'):
+            site = site[:-1]
+        linklist = spiderlinks(site)
+        sub, dom, tld = tldextract.extract(site)
+        basedomain = f'{dom}.{tld}'
+        print(f'{Fore.LIGHTBLUE_EX}[*]{Fore.RESET} now running on: {Fore.LIGHTMAGENTA_EX + site + Fore.RESET}, scope is anything with {Fore.LIGHTMAGENTA_EX + dom}')
+        runlist = []
+        scriptlist = set()
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:94.0) Gecko/20100101 Firefox/94.0"}
+        res = requests.get(site, headers=headers)
+        if res.status_code == 200:
+            soup = BeautifulSoup(res.text, 'html.parser')
+            for script in soup.find_all('script'):
+                if script.attrs.get('src'):
+                    url = script.attrs.get('src')
+                    if url.startswith('/'):
+                        scriptlist.add(site + url)
+                    elif url.startswith('http'):
+                        scriptlist.add(url)
                     else:
-                        if not args.no_entropy:
-                            print(f'{Fore.LIGHTRED_EX}[-] no high entropy strings found in script {interestingscript}')
-                        elif not args.no_regex:
-                            print(f'{Fore.LIGHTRED_EX}[-] no regex matches found in script {interestingscript}')
-                        else:
-                            print(f'{Fore.LIGHTRED_EX}[-] no regex or high entropy found in script {interestingscript}')
+                        scriptlist.add(site + '/' + url)
+            if scriptlist:
+                print(f'{Fore.LIGHTGREEN_EX}[+]{Fore.RESET} scripts found:\n\t{scriptlist}\n{Fore.LIGHTGREEN_EX}[+]{Fore.RESET} now crunching, hold on.')
+                for interestingscript in scriptlist:
+                    if dom in interestingscript or args.no_limit:
+                        extract_secrets(interestingscript)
+            else:
+                print(f'{Fore.LIGHTRED_EX}[-] no scripts found')
         else:
-            print(f'{Fore.LIGHTRED_EX}[-] no scripts found')
-    else:
-        print(f'{Fore.LIGHTRED_EX}[-] Error\n{res.status_code}\n{res.headers}')
+            print(f'{Fore.LIGHTRED_EX}[-] Error\n{res.status_code}\n{res.headers}')
     print('\n' + Fore.LIGHTBLUE_EX + 'OK I love you bye bye\n')
