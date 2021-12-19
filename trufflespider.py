@@ -185,7 +185,7 @@ if __name__ == '__main__':
                     else:
                         scriptlist.add(site + '/' + url)
             if scriptlist:
-                print(f'{Fore.LIGHTGREEN_EX}[+]{Fore.RESET} scripts found:\n\t{scriptlist}\n{Fore.LIGHTGREEN_EX}[+]{Fore.RESET} now crunching, hold on.')
+                print(f'{Fore.LIGHTGREEN_EX}[+]{Fore.RESET} scripts found:\n\t{"\n\t".join(scriptlist)}\n{Fore.LIGHTGREEN_EX}[+]{Fore.RESET} now crunching, hold on.')
                 for interestingscript in scriptlist:
                     if dom in interestingscript or args.no_limit:
                         extract_secrets(interestingscript)
