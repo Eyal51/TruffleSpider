@@ -1,3 +1,4 @@
+import sys
 from colorama import Fore, init, Style
 from argparse import ArgumentParser
 from bs4 import BeautifulSoup
@@ -155,6 +156,9 @@ if __name__ == '__main__':
     group.add_argument('--no-regex', action='store_false', default=True, help='do not search secrets by regex')
     parser.add_argument('--no-limit', action='store_true', default=False, help='do not limit searching js files to the same domain')
     args = parser.parse_args()
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stderr)
+        sys.exit(1)
     if args.s:
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:94.0) Gecko/20100101 Firefox/94.0"}
         res = requests.get(args.s, headers=headers, verify=False)
