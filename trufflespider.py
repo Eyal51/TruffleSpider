@@ -88,7 +88,7 @@ def spiderlinks(target: str) -> list:
     sub, dom, tld = tldextract.extract(target)
     basedomain = f'{dom}.{tld}'
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:94.0) Gecko/20100101 Firefox/94.0"}
-    res = requests.get(target, headers=headers)
+    res = requests.get(target, headers=headers, verify=False)
     linklist = set()
     if res.status_code == 200:
         soup = BeautifulSoup(res.text, 'html.parser')
@@ -108,7 +108,7 @@ def spiderlinks(target: str) -> list:
 
 
 def extract_secrets(interestingscript):
-    js = requests.get(interestingscript).text
+    js = requests.get(interestingscript, headers=headers, verify=False).text
     beautiful = jsbeautifier.beautify(js)
     entropy_results, regex_results = get_secrets(beautiful, regexes, do_entropy=args.no_entropy, do_regex=args.no_regex)
     duplist = set()
@@ -157,7 +157,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.s:
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:94.0) Gecko/20100101 Firefox/94.0"}
-        res = requests.get(args.s, headers=headers)
+        res = requests.get(args.s, headers=headers, verify=False)
         if res.status_code == 200:
             print(f'{Fore.LIGHTBLUE_EX}[*]{Fore.RESET} now searching secrets on: {Fore.LIGHTMAGENTA_EX + args.s + Fore.RESET}')
             extract_secrets(args.s)
@@ -172,7 +172,7 @@ if __name__ == '__main__':
         runlist = []
         scriptlist = set()
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:94.0) Gecko/20100101 Firefox/94.0"}
-        res = requests.get(site, headers=headers)
+        res = requests.get(site, headers=headers, verify=False)
         if res.status_code == 200:
             soup = BeautifulSoup(res.text, 'html.parser')
             for script in soup.find_all('script'):
@@ -185,7 +185,8 @@ if __name__ == '__main__':
                     else:
                         scriptlist.add(site + '/' + url)
             if scriptlist:
-                print(f'{Fore.LIGHTGREEN_EX}[+]{Fore.RESET} scripts found:\n\t{"\n\t".join(scriptlist)}\n{Fore.LIGHTGREEN_EX}[+]{Fore.RESET} now crunching, hold on.')
+                nlt = '\n\t'
+                print(f'{Fore.LIGHTGREEN_EX}[+]{Fore.RESET} scripts found:\n\t{nlt.join(scriptlist)}\n{Fore.LIGHTGREEN_EX}[+]{Fore.RESET} now crunching, hold on.')
                 for interestingscript in scriptlist:
                     if dom in interestingscript or args.no_limit:
                         extract_secrets(interestingscript)
